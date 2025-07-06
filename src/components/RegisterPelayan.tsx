@@ -107,8 +107,8 @@ export default function RegisterPelayanPublic() {
       } else {
         kode_pelayan = generateKodePelayan();
         const qrBlob = await generateQRWithTextBlob(kode_pelayan, pelayan.nama_pelayan.toUpperCase(), {
-          darkColor: '#075aad',
-          lightColor: '#ffffff',
+          darkColor: '#ffffff',
+            lightColor: '#075aad',
           fontSize: 12,
         });
 
@@ -155,9 +155,16 @@ export default function RegisterPelayanPublic() {
       });
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
-    } catch (error) {
-      toast.error('Terjadi kesalahan saat proses registrasi.');
-    } finally {
+    } catch (error: any) {
+      const message =
+        error?.message ||
+        error?.response?.data?.message ||
+        error?.response?.statusText ||
+        'Terjadi kesalahan saat proses registrasi.';
+    
+      toast.error(`Registrasi gagal: ${message}`);
+    }
+    finally {
       setIsSubmitting(false);
     }
   };

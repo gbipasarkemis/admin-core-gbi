@@ -199,8 +199,8 @@ export default function RegisterPelayan() {
           // const qrBlob = await generateQRCodeBlob(kode_pelayan);
 
           const qrBlob = await generateQRWithTextBlob(kode_pelayan, pelayan.nama_pelayan.toUpperCase(), {
-            darkColor: '#075aad',
-            lightColor: '#ffffff',
+            darkColor: '#ffffff',
+            lightColor: '#075aad',
             fontSize: 12,
           });
           
