@@ -12,8 +12,12 @@
     "@emailjs/browser": "^4.4.1",
     "@emailjs/nodejs": "^5.0.2",
     "@supabase/supabase-js": "^2.50.2",
+    "cropperjs": "^1.5.13",
+    "dayjs": "^1.11.13",
     "emailjs-com": "^3.2.0",
     "jsqr": "^1.4.0",
+    "locale": "^0.1.0",
+    "lucide-react": "^0.525.0",
     "next": "15.3.4",
     "qrcode": "^1.5.4",
     "qrcode-decoder": "^0.3.4",
@@ -22,7 +26,8 @@
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "sweetalert2": "^11.22.2",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -32,6 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@types/xlsx": "^0.0.35",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "tailwindcss": "^4",

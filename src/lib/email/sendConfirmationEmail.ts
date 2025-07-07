@@ -17,9 +17,9 @@ export async function sendConfirmationEmail({
     : process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID_NO_QR;
 
 
-    console.log("Kirim to_email:", to_email);
-    console.log("Nama to_name", to_name);
-    console.log("QR URL qrcode_url", qrcode_url);
+    // console.log("Kirim to_email:", to_email);
+    // console.log("Nama to_name", to_name);
+    // console.log("QR URL qrcode_url", qrcode_url);
 
   const payload = {
     to_email,

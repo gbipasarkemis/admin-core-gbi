@@ -8,6 +8,9 @@ import { readQRCodeFromFile } from '@/lib/qr/readQRCodeFromFile';
 import { sendConfirmationEmail } from '@/lib/email/sendConfirmationEmail';
 import toast from 'react-hot-toast';
 import LoadingOverlay from '@/components/LoadingOverlay';
+// src/components/QRCodeCropper.tsx
+import 'cropperjs/dist/cropper.css'
+
 
 type Pelayan = {
   nama_pelayan: string;
@@ -157,7 +160,7 @@ export default function RegisterPelayanPublic() {
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error: any) {
 
-      console.error('Emm error:', error);
+      // console.error('Emm error:', error);
 
       const message =
         error?.message ||

@@ -12,6 +12,10 @@ import { useRef } from 'react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import LoadingOverlay from '@/components/LoadingOverlay';
+// src/components/QRCodeCropper.tsx
+import 'cropperjs/dist/cropper.css'
+
+
 
 type Pelayan = {
   kode_pelayan: string;
