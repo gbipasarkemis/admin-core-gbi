@@ -26,13 +26,13 @@ export default function AdminNavbar({ userName }: AdminNavbarProps) {
         className="flex items-center gap-3 cursor-pointer"
         onClick={() => router.push('/admin')}
       >
-        <Image
+        {/* <Image
           src="/assets/gbi-logo.png"
           alt="GBI Pasar Kemis"
           width={40}
           height={40}
           className="rounded"
-        />
+        /> */}
         <span className="text-gray-900 font-semibold text-base tracking-wide">
           Dashboard Admin
         </span>

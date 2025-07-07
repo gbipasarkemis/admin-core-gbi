@@ -182,23 +182,37 @@ export default function RegisterPelayan() {
         let qrCodeUrlForDB: string | null = null;
 
         if (file !== null) {
-          // ✅ Read QR code from uploaded image
           const result = await readQRCodeFromFile(file);
+        
           if (!result) {
             setErrorMessage('QR Code tidak valid.');
-            toast.error('QR Code tidak valid.'); // ⛔ Toast error muncul
+            toast.error('QR Code tidak valid.');
             return;
           }
+        
+          // 🔍 Cek apakah kode QR sudah terdaftar
+          const { data: existingKode } = await supabase
+            .from('pelayan')
+            .select('kode_pelayan')
+            .eq('kode_pelayan', result)
+            .maybeSingle();
+        
+          if (existingKode) {
+            setErrorMessage('QR Code sudah digunakan oleh pelayan lain.');
+            toast.error('QR Code sudah digunakan oleh pelayan lain.');
+            return;
+          }
+        
           kode_pelayan = result;
-          qrCodeUrlForDB = null; // 👈 jangan upload gambar, langsung null
-   
+          qrCodeUrlForDB = null;
+        
           await sendConfirmationEmail({
             to_email: pelayan.email,
             to_name: pelayan.nama_pelayan,
             qrcode_url: qrCodeUrlForDB ?? '',
           });
-          
-        } else {
+        }
+        else {
           kode_pelayan = generateKodePelayan();
           // const qrBlob = await generateQRCodeBlob(kode_pelayan);
 
@@ -471,23 +485,34 @@ export default function RegisterPelayan() {
           </div>
 
           {/* Upload QR Code */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Upload QR Code Rayon 3 Anda (jika punya)
-            </label>
+          <div className="flex items-center gap-3">
             <input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
               ref={fileInputRef}
               disabled={isEditing}
-              className={`w-full px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-800 placeholder-gray-400
+              className={`flex-1 px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-800 placeholder-gray-400
                 focus:outline-none focus:ring-2 focus:ring-blue-500 transition
                 ${isEditing ? 'cursor-not-allowed opacity-60' : 'hover:bg-gray-50'}
                 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm
                 file:bg-blue-600 file:text-white hover:file:bg-blue-700`}
             />
+
+            {file && !isEditing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFile(null)
+                  if (fileInputRef.current) fileInputRef.current.value = ''
+                }}
+                className="text-red-600 text-xs font-medium hover:underline whitespace-nowrap"
+              >
+                Hapus
+              </button>
+            )}
           </div>
+
 
 
           {/* Tombol Submit */}

@@ -102,12 +102,27 @@ export default function RegisterPelayanPublic() {
 
       if (file) {
         const result = await readQRCodeFromFile(file);
+      
         if (!result) {
           toast.error('QR Code tidak valid.');
           return;
         }
+      
+        // 🔍 Cek apakah kode sudah digunakan
+        const { data: existingQRCode } = await supabase
+          .from('pelayan')
+          .select('kode_pelayan')
+          .eq('kode_pelayan', result)
+          .maybeSingle();
+      
+        if (existingQRCode) {
+          toast.error('QR Code sudah terdaftar. Silakan gunakan QR lain.');
+          return;
+        }
+      
         kode_pelayan = result;
-      } else {
+      }
+      else {
         kode_pelayan = generateKodePelayan();
         const qrBlob = await generateQRWithTextBlob(kode_pelayan, pelayan.nama_pelayan.toUpperCase(), {
           darkColor: '#ffffff',
@@ -271,18 +286,30 @@ export default function RegisterPelayanPublic() {
         </div>
 
         {/* Upload QR Code (Opsional) */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            Upload QR Code Rayon 3 Anda (jika punya)
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            ref={fileInputRef}
-            className="w-full px-3 py-2 border rounded-md text-sm text-gray-800 bg-white file:bg-blue-600 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-md hover:file:bg-blue-700 transition"
-          />
-        </div>
+        <div className="flex items-center gap-3">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          ref={fileInputRef}
+          className="flex-1 px-3 py-2 border rounded-md text-sm text-gray-800 bg-white file:bg-blue-600 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-md hover:file:bg-blue-700 transition"
+        />
+
+        {file && (
+          <button
+            type="button"
+            onClick={() => {
+              setFile(null)
+              if (fileInputRef.current) fileInputRef.current.value = ''
+            }}
+            className="text-red-600 text-xs font-medium hover:underline whitespace-nowrap"
+          >
+            Hapus
+          </button>
+        )}
+      </div>
+
+
 
         {/* Tombol Submit */}
         <button
