@@ -485,36 +485,40 @@ export default function RegisterPelayan() {
           </div>
 
           {/* Upload QR Code */}
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-gray-700">
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-1">
               Upload QR Code Rayon 3 Anda (jika punya)
             </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              ref={fileInputRef}
-              disabled={isEditing}
-              className={`flex-1 px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-800 placeholder-gray-400
-                focus:outline-none focus:ring-2 focus:ring-blue-500 transition
-                ${isEditing ? 'cursor-not-allowed opacity-60' : 'hover:bg-gray-50'}
-                file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm
-                file:bg-blue-600 file:text-white hover:file:bg-blue-700`}
-            />
 
-            {file && !isEditing && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFile(null)
-                  if (fileInputRef.current) fileInputRef.current.value = ''
-                }}
-                className="text-red-600 text-xs font-medium hover:underline whitespace-nowrap"
-              >
-                Hapus
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                disabled={isEditing}
+                className={`flex-1 px-3 py-2 rounded-md border border-gray-300 bg-white text-gray-800 placeholder-gray-400
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 transition
+                  ${isEditing ? 'cursor-not-allowed opacity-60' : 'hover:bg-gray-50'}
+                  file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm
+                  file:bg-blue-600 file:text-white hover:file:bg-blue-700`}
+              />
+
+              {file && !isEditing && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFile(null)
+                    if (fileInputRef.current) fileInputRef.current.value = ''
+                  }}
+                  className="text-red-600 text-xs font-medium hover:underline whitespace-nowrap"
+                >
+                  Hapus
+                </button>
+              )}
+            </div>
           </div>
+
 
 
 

@@ -286,32 +286,35 @@ export default function RegisterPelayanPublic() {
         </div>
 
         {/* Upload QR Code (Opsional) */}
-        <div className="flex items-center gap-3">
-        <label className="text-sm font-medium text-gray-700">
-              Upload QR Code Rayon 3 Anda (jika punya)
-            </label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          ref={fileInputRef}
-          className="flex-1 px-3 py-2 border rounded-md text-sm text-gray-800 bg-white file:bg-blue-600 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-md hover:file:bg-blue-700 transition"
-        />
+        {/* Upload QR Code */}
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-1 block">
+            Upload QR Code Rayon 3 Anda (jika punya)
+          </label>
 
-        {file && (
-          <button
-            type="button"
-            onClick={() => {
-              setFile(null)
-              if (fileInputRef.current) fileInputRef.current.value = ''
-            }}
-            className="text-red-600 text-xs font-medium hover:underline whitespace-nowrap"
-          >
-            Hapus
-          </button>
-        )}
-      </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              className="flex-1 px-3 py-2 border rounded-md text-sm text-gray-800 bg-white file:bg-blue-600 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-md hover:file:bg-blue-700 transition"
+            />
 
+            {file && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFile(null)
+                  if (fileInputRef.current) fileInputRef.current.value = ''
+                }}
+                className="text-red-600 text-xs font-medium hover:underline whitespace-nowrap"
+              >
+                Hapus
+              </button>
+            )}
+          </div>
+        </div>
 
 
         {/* Tombol Submit */}
