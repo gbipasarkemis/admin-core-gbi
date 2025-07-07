@@ -156,6 +156,9 @@ export default function RegisterPelayanPublic() {
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error: any) {
+
+      console.error('Emm error:', error);
+
       const message =
         error?.message ||
         error?.response?.data?.message ||
