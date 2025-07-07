@@ -44,9 +44,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <main className="flex-1 p-6 overflow-y-auto">
           {/* Judul hanya tampil di desktop & saat sidebar aktif */}
-          <div className={`mb-4 hidden md:block ${sidebarVisible ? '' : 'hidden'}`}>
-            <h1 className="text-xl font-semibold text-gray-800">Dashboard Admin</h1>
-          </div>
+          {/* <div className={`mb-4 hidden md:block ${sidebarVisible ? '' : 'hidden'}`}>
+            <h1 className="text-xl font-semibold text-gray-800">Data Absensi - Doa Pengerja</h1>
+          </div> */}
 
           {children}
         </main>

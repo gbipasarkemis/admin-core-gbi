@@ -215,7 +215,7 @@ export default function DepartmentsPage() {
       {/* Table Card */}
       <div className="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Tabel Department
+          Table Department
         </h2>
         <div className="flex justify-end mb-4">
           <input
