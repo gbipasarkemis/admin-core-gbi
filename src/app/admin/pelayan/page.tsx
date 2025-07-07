@@ -486,6 +486,9 @@ export default function RegisterPelayan() {
 
           {/* Upload QR Code */}
           <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700">
+              Upload QR Code Rayon 3 Anda (jika punya)
+            </label>
             <input
               type="file"
               accept="image/*"
