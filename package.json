@@ -11,6 +11,7 @@
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "@emailjs/nodejs": "^5.0.2",
+    "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.50.2",
     "chart.js": "^4.5.0",
     "cropperjs": "^1.5.13",
