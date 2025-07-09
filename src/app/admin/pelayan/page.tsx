@@ -216,11 +216,18 @@ export default function RegisterPelayan() {
           kode_pelayan = generateKodePelayan();
           // const qrBlob = await generateQRCodeBlob(kode_pelayan);
 
+          // const qrBlob = await generateQRWithTextBlob(kode_pelayan, pelayan.nama_pelayan.toUpperCase(), {
+          //   darkColor: '#ffffff',
+          //   lightColor: '#000080',
+          //   fontSize: 12,
+          // });
+
           const qrBlob = await generateQRWithTextBlob(kode_pelayan, pelayan.nama_pelayan.toUpperCase(), {
-            darkColor: '#ffffff',
-            lightColor: '#075aad',
-            fontSize: 12,
-          });
+            scale: 12,
+            fontSize: 18,
+            cornerRadius: 20,
+            outerPadding: 32
+          })
           
 
           const formData = new FormData();
