@@ -23,6 +23,10 @@ export default function ScanPage() {
 
   const playSuccessSound = () => {
     const audio = new Audio('/assets/success.mp3')
+
+    // Trigger agar audio bisa preload di beberapa browser
+    audio.load()
+
     audio.play().catch((e) => console.warn('Sound error:', e))
   }
   
