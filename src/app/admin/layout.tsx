@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import AdminNavbar from '@/components/AdminNavbar'
 import AdminSidebar from '@/components/AdminSidebar'
 import { supabase } from '@/lib/supabaseClient'
+import LoadingOverlay from '@/components/LoadingOverlay'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -31,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     checkAuth()
   }, [router])
 
-  if (isLoading) return <p className="p-6">Loading...</p>
+  if (isLoading) return <LoadingOverlay />
   if (!isAuthorized) return null
 
   return (
