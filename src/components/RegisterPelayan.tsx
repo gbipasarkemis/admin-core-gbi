@@ -8,9 +8,7 @@ import { readQRCodeFromFile } from '@/lib/qr/readQRCodeFromFile';
 import { sendConfirmationEmail } from '@/lib/email/sendConfirmationEmail';
 import toast from 'react-hot-toast';
 import LoadingOverlay from '@/components/LoadingOverlay';
-// src/components/QRCodeCropper.tsx
-import 'cropperjs/dist/cropper.css'
-
+import 'cropperjs/dist/cropper.css';
 
 type Pelayan = {
   nama_pelayan: string;
@@ -19,6 +17,7 @@ type Pelayan = {
   alamat: string;
   department: string;
   email: string;
+  nomor_hp: string;
 };
 
 type Department = {
@@ -34,6 +33,7 @@ export default function RegisterPelayanPublic() {
     alamat: '',
     department: '',
     email: '',
+    nomor_hp: '',
   });
 
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -102,41 +102,33 @@ export default function RegisterPelayanPublic() {
 
       if (file) {
         const result = await readQRCodeFromFile(file);
-      
+
         if (!result) {
           toast.error('QR Code tidak valid.');
           return;
         }
-      
-        // 🔍 Cek apakah kode sudah digunakan
+
         const { data: existingQRCode } = await supabase
           .from('pelayan')
           .select('kode_pelayan')
           .eq('kode_pelayan', result)
           .maybeSingle();
-      
+
         if (existingQRCode) {
           toast.error('QR Code sudah terdaftar. Silakan gunakan QR lain.');
           return;
         }
-      
+
         kode_pelayan = result;
-      }
-      else {
+      } else {
         kode_pelayan = generateKodePelayan();
-        // const qrBlob = await generateQRWithTextBlob(kode_pelayan, pelayan.nama_pelayan.toUpperCase(), {
-        //   darkColor: '#ffffff',
-        //     lightColor: '#000080',
-        //   fontSize: 12,
-        // });
 
         const qrBlob = await generateQRWithTextBlob(kode_pelayan, pelayan.nama_pelayan.toUpperCase(), {
           scale: 12,
           fontSize: 18,
           cornerRadius: 20,
-          outerPadding: 32
-        })
-        
+          outerPadding: 32,
+        });
 
         const formData = new FormData();
         formData.append('kode', kode_pelayan);
@@ -178,22 +170,19 @@ export default function RegisterPelayanPublic() {
         alamat: '',
         department: '',
         email: '',
+        nomor_hp: '',
       });
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (error: any) {
-
-      // console.error('Emm error:', error);
-
       const message =
         error?.message ||
         error?.response?.data?.message ||
         error?.response?.statusText ||
         'Terjadi kesalahan saat proses registrasi.';
-    
+
       toast.error(`Registrasi gagal: ${message}`);
-    }
-    finally {
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -257,6 +246,18 @@ export default function RegisterPelayanPublic() {
           </div>
 
           <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Nomor HP</label>
+            <input
+              type="tel"
+              name="nomor_hp"
+              value={pelayan.nomor_hp}
+              onChange={handleChange}
+              placeholder="081234567890"
+              className="w-full px-3 py-2 border rounded-md text-sm text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">Department</label>
             <select
               name="department"
@@ -267,77 +268,93 @@ export default function RegisterPelayanPublic() {
               <option value="">Pilih department</option>
               {departments.map((d) => (
                 <option key={d.id_department} value={d.id_department}>
-                  {d.nama_department}
-                </option>
-              ))}
-            </select>
-          </div>
+                {d.nama_department}
+              </option>
+            ))}
+          </select>
+        </div> */}
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={pelayan.email}
-              onChange={handleChange}
-              placeholder="contoh@domain.com"
-              className={`w-full px-3 py-2 border rounded-md text-sm text-gray-800 placeholder-gray-400 focus:ring-2 transition ${
-                isEmailTaken ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-              }`}
-            />
-            {isEmailTaken && (
-              <p className="text-red-600 text-sm mt-1">
-                Email telah terdaftar. Silakan gunakan email lain.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Upload QR Code (Opsional) */}
-        {/* Upload QR Code */}
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-1 block">
-            Upload QR Code Rayon 3 Anda (jika punya)
-          </label>
-
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              ref={fileInputRef}
-              className="flex-1 px-3 py-2 border rounded-md text-sm text-gray-800 bg-white file:bg-blue-600 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-md hover:file:bg-blue-700 transition"
-            />
-
-            {file && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFile(null)
-                  if (fileInputRef.current) fileInputRef.current.value = ''
-                }}
-                className="text-red-600 text-xs font-medium hover:underline whitespace-nowrap"
-              >
-                Hapus
-              </button>
-            )}
-          </div>
-        </div>
-
-
-        {/* Tombol Submit */}
-        <button
-          type="submit"
-          disabled={!isFormValid() || isSubmitting}
-          className={`w-full py-2 rounded-md text-white text-sm font-semibold transition ${
-            isFormValid() && !isSubmitting
-              ? 'bg-blue-600 hover:bg-blue-700'
-              : 'bg-gray-400 cursor-not-allowed'
+        <label className="text-sm font-medium text-gray-700 mb-1 block">Email</label>
+        <input
+          type="email"
+          name="email"
+          value={pelayan.email}
+          onChange={handleChange}
+          placeholder="contoh@domain.com"
+          className={`w-full px-3 py-2 border rounded-md text-sm text-gray-800 placeholder-gray-400 focus:ring-2 transition ${
+            isEmailTaken ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
           }`}
-        >
-          {isSubmitting ? 'Mendaftarkan...' : 'Daftar Sekarang'}
-        </button>
-      </form>
-    </div>
-  );
+        />
+        {isEmailTaken && (
+          <p className="text-red-600 text-sm mt-1">
+            Email telah terdaftar. Silakan gunakan email lain.
+          </p>
+        )}
+      </div>
+
+      
+      </div>
+
+      <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Department</label>
+            <select
+              name="department"
+              value={pelayan.department}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded-md text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Pilih department</option>
+              {departments.map((d) => (
+                <option key={d.id_department} value={d.id_department}>
+                {d.nama_department}
+              </option>
+            ))}
+          </select>
+        </div> 
+      {/* Upload QR Code */}
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-1 block">
+          Upload QR Code Rayon 3 Anda (jika punya)
+        </label>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            ref={fileInputRef}
+            className="flex-1 px-3 py-2 border rounded-md text-sm text-gray-800 bg-white file:bg-blue-600 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-md hover:file:bg-blue-700 transition"
+          />
+
+          {file && (
+            <button
+              type="button"
+              onClick={() => {
+                setFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
+              className="text-red-600 text-xs font-medium hover:underline whitespace-nowrap"
+            >
+              Hapus
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tombol Submit */}
+      <button
+        type="submit"
+        disabled={!isFormValid() || isSubmitting}
+        className={`w-full py-2 rounded-md text-white text-sm font-semibold transition ${
+          isFormValid() && !isSubmitting
+            ? 'bg-blue-600 hover:bg-blue-700'
+            : 'bg-gray-400 cursor-not-allowed'
+        }`}
+      >
+        {isSubmitting ? 'Mendaftarkan...' : 'Daftar Sekarang'}
+      </button>
+    </form>
+  </div>
+);
 }
