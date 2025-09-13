@@ -10,7 +10,6 @@ import { Pie } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-
 dayjs.locale('id')
 
 const supabase = createClient(
@@ -23,6 +22,14 @@ type KehadiranRow = {
   bulan: number
   status: string
 }
+
+type DepartemenStat = {
+  nama_department: string
+  total_hadir: number
+  total_pelayan: number
+}
+
+
 
 const namaBulan = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -40,7 +47,23 @@ export default function StatistikAbsensiRange() {
   const [isLoading, setIsLoading] = useState(true)
   const [kehadiranRaw, setKehadiranRaw] = useState<KehadiranRow[]>([])
   const [formatted, setFormatted] = useState<any[]>([])
-  const [dataChart, setDataChart] = useState<{ nama_department: string, total_hadir: number }[]>([])
+  const [dataChart, setDataChart] = useState<DepartemenStat[]>([])
+
+  const [statistikDepartemen, setStatistikDepartemen] = useState<DepartemenStat[]>([])
+
+  const fetchStatistikDepartemen = async () => {
+    const { data, error } = await supabase.rpc('get_kehadiran_departemen_dengan_total', {
+      start_bulan: rangeStart,
+      end_bulan: rangeEnd,
+      tahun
+    })
+    if (error) {
+      console.error('Gagal ambil data departemen:', error.message)
+      setStatistikDepartemen([])
+    } else {
+      setStatistikDepartemen(data || [])
+    }
+  }
 
 
   const fetchKehadiran = async () => {
@@ -66,29 +89,25 @@ export default function StatistikAbsensiRange() {
     setIsLoading(false)
   }
 
-  useEffect(() => {
-    const fetchChartData = async () => {
-      const { data, error } = await supabase.rpc('get_kehadiran_summary_departemen', {
-        start_bulan: rangeStart,
-        end_bulan: rangeEnd,
-        tahun
-      })
-      if (error) console.error('Gagal ambil chart:', error.message)
-      else setDataChart(data || [])
-    }
-  
-    fetchChartData()
-  }, [rangeStart, rangeEnd, tahun])
-  
+  const fetchChartData = async () => {
+    const { data, error } = await supabase.rpc('get_kehadiran_summary_departemen', {
+      start_bulan: rangeStart,
+      end_bulan: rangeEnd,
+      tahun
+    })
+    if (error) console.error('Gagal ambil chart:', error.message)
+    else setDataChart(data || [])
+  }
 
   useEffect(() => {
-    // Jagaan filter tidak boleh lebih dari bulan sekarang di tahun ini
     if (tahun === tahunSekarang) {
       if (rangeEnd > bulanSekarang) setRangeEnd(bulanSekarang)
       if (rangeStart > bulanSekarang) setRangeStart(1)
     }
 
     fetchKehadiran()
+    fetchChartData()
+    fetchStatistikDepartemen()
   }, [rangeStart, rangeEnd, tahun])
 
   useEffect(() => {
@@ -128,42 +147,25 @@ export default function StatistikAbsensiRange() {
     writeFile(workbook, namaFile)
   }
 
-  if (isLoading)
-  return (
-    <LoadingOverlay />
-  );
+  if (isLoading) return <LoadingOverlay />
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-6">
-       Absensi Doa Pengerja
+        Absensi Doa Pengerja
       </h2>
 
-      {/* Filter Range & Tahun */}
+      {/* Filter */}
       <div className="flex flex-wrap gap-4 items-center mb-6">
         <div className="flex gap-2 items-center">
           <label className="text-sm font-medium text-gray-700">Bulan:</label>
-          <select
-            value={rangeStart}
-            onChange={(e) => setRangeStart(+e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
-            {namaBulan.map((b, i) => (
-              <option key={i + 1} value={i + 1}>{b}</option>
-            ))}
+          <select value={rangeStart} onChange={(e) => setRangeStart(+e.target.value)} className="px-3 py-2 border rounded-md text-sm">
+            {namaBulan.map((b, i) => <option key={i + 1} value={i + 1}>{b}</option>)}
           </select>
           <span className="text-sm text-gray-600">hingga</span>
-          <select
-            value={rangeEnd}
-            onChange={(e) => setRangeEnd(+e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
+          <select value={rangeEnd} onChange={(e) => setRangeEnd(+e.target.value)} className="px-3 py-2 border rounded-md text-sm">
             {namaBulan.map((b, i) => (
-              <option
-                key={i + 1}
-                value={i + 1}
-                disabled={tahun === tahunSekarang && i + 1 > bulanSekarang}
-              >
+              <option key={i + 1} value={i + 1} disabled={tahun === tahunSekarang && i + 1 > bulanSekarang}>
                 {b}
               </option>
             ))}
@@ -172,11 +174,7 @@ export default function StatistikAbsensiRange() {
 
         <div className="flex gap-2 items-center">
           <label className="text-sm font-medium text-gray-700">Tahun:</label>
-          <select
-            value={tahun}
-            onChange={(e) => setTahun(+e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          >
+          <select value={tahun} onChange={(e) => setTahun(+e.target.value)} className="px-3 py-2 border rounded-md text-sm">
             {[...Array(5)].map((_, i) => {
               const y = tahunSekarang - i
               return <option key={y} value={y}>{y}</option>
@@ -185,35 +183,32 @@ export default function StatistikAbsensiRange() {
         </div>
 
         <div className="ml-auto">
-          <button
-            onClick={exportXLS}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm font-medium shadow-sm"
-          >
+          <button onClick={exportXLS} className="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700">
             Download XLS
           </button>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Tabel Kehadiran */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-3 py-2 text-left font-medium text-gray-700">No</th>
-              <th className="px-3 py-2 text-left font-medium text-gray-700">Nama Pelayan</th>
+              <th className="px-3 py-2 text-left">No</th>
+              <th className="px-3 py-2 text-left">Nama Pelayan</th>
               {namaBulan.slice(rangeStart - 1, rangeEnd).map((b, i) => (
-                <th key={i} className="px-3 py-2 text-center font-medium text-gray-700">{b}</th>
+                <th key={i} className="px-3 py-2 text-center">{b}</th>
               ))}
-              <th className="px-3 py-2 text-center font-medium text-gray-700">Total Kehadiran</th>
+              <th className="px-3 py-2 text-center">Total Kehadiran</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {formatted.map((d, i) => (
               <tr key={i} className="hover:bg-gray-50">
-                <td className="px-3 py-2 text-gray-800 text-center">{i + 1}</td>
-                <td className="px-3 py-2 text-gray-800 font-medium">{d.nama}</td>
+                <td className="px-3 py-2 text-center">{i + 1}</td>
+                <td className="px-3 py-2 font-medium">{d.nama}</td>
                 {namaBulan.slice(rangeStart - 1, rangeEnd).map((b, j) => (
-                  <td key={j} className="px-3 py-2 text-center text-gray-800">
+                  <td key={j} className="px-3 py-2 text-center">
                     <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
                       d[b] === 'Hadir' ? 'bg-green-100 text-green-700' :
                       d[b] === 'Tidak' ? 'bg-red-100 text-red-700' :
@@ -223,8 +218,8 @@ export default function StatistikAbsensiRange() {
                     </span>
                   </td>
                 ))}
-                <td className="px-3 py-2 text-center font-bold text-gray-800">{d['Total Kehadiran']}</td>
-                              </tr>
+                                <td className="px-3 py-2 text-center font-bold">{d['Total Kehadiran']}</td>
+              </tr>
             ))}
           </tbody>
         </table>
@@ -233,43 +228,69 @@ export default function StatistikAbsensiRange() {
           Menampilkan {formatted.length} pelayan dari bulan {namaBulan[rangeStart - 1]} hingga {namaBulan[rangeEnd - 1]} tahun {tahun}.
         </p>
         <br/>
+
         {dataChart.length > 0 && (
-        <div className="mt-10">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Statistik Kehadiran Per Departemen
-          </h3>
-          <div className="max-w-md mx-auto">
-            <Pie
-              data={{
-                labels: dataChart.map((d) => d.nama_department),
-                datasets: [{
-                  label: 'Jumlah Hadir',
-                  data: dataChart.map((d) => d.total_hadir),
-                  backgroundColor: [
-                    '#A3BFFA', '#B2DFDB', '#FFCCBC', '#C5E1A5', '#F8BBD0',
-                    '#D1C4E9', '#FFE082', '#BCAAA4', '#90CAF9'
-                  ],
-                  borderWidth: 1,
-                }],
-              }}
-              options={{
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    labels: {
-                      boxWidth: 12,
-                      font: { size: 12 }
+          <div className="mt-10">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Statistik Kehadiran Per Departemen
+            </h3>
+
+            {/* Pie Chart */}
+            <div className="max-w-md mx-auto">
+              <Pie
+                data={{
+                  labels: dataChart.map((d) => d.nama_department),
+                  datasets: [{
+                    label: 'Jumlah Hadir',
+                    data: dataChart.map((d) => d.total_hadir),
+                    backgroundColor: [
+                      '#A3BFFA', '#B2DFDB', '#FFCCBC', '#C5E1A5', '#F8BBD0',
+                      '#D1C4E9', '#FFE082', '#BCAAA4', '#90CAF9'
+                    ],
+                    borderWidth: 1,
+                  }],
+                }}
+                options={{
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        boxWidth: 12,
+                        font: { size: 12 }
+                      }
                     }
                   }
-                }
-              }}
-            />
-            <p className="text-sm text-gray-600 mt-3 text-center">
-              Menampilkan jumlah pelayan hadir berdasarkan departemen untuk rentang yang dipilih.
-            </p>
+                }}
+              />
+              <p className="text-sm text-gray-600 mt-3 text-center">
+                Menampilkan jumlah pelayan hadir berdasarkan departemen untuk rentang yang dipilih.
+              </p>
+            </div>
           </div>
+        )}
+
+        {/* Statistik Kehadiran Per Departemen (List Format) */}
+        <div className="mt-10">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            Rekap Kehadiran Per Departemen
+          </h3>
+          {statistikDepartemen.length === 0 ? (
+            <p className="text-sm text-gray-500">Belum ada data kehadiran departemen untuk rentang ini.</p>
+          ) : (
+            <ul className="space-y-2 text-sm text-gray-700">
+              {statistikDepartemen.map((d, i) => {
+                const persentase = d.total_pelayan > 0
+                  ? Math.round((d.total_hadir / d.total_pelayan) * 100)
+                  : 0
+                return (
+                  <li key={i} className="bg-gray-50 px-4 py-2 rounded-md shadow-sm">
+                    <strong>{d.nama_department}</strong>: {d.total_hadir} orang hadir dari {d.total_pelayan} orang (kehadiran {persentase}%)
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </div>
-      )}
 
       </div>
     </div>

@@ -7,8 +7,7 @@ import LoadingOverlay from '@/components/LoadingOverlay'
 import dayjs from 'dayjs'
 import 'dayjs/locale/id'
 
-dayjs.locale('id') // ✅ Gunakan Bahasa Indonesia
-
+dayjs.locale('id')
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,8 +19,15 @@ type Kehadiran = {
   status: string
 }
 
+type StatistikDepartemen = {
+  nama_departemen: string
+  total_hadir: number
+  total_pelayan: number
+}
+
 export default function StatistikBulananPage() {
   const [kehadiran, setKehadiran] = useState<Kehadiran[]>([])
+  const [statistikDepartemen, setStatistikDepartemen] = useState<StatistikDepartemen[]>([])
   const [bulan, setBulan] = useState(new Date().getMonth() + 1)
   const [isLoadingPage, setIsLoadingPage] = useState(true)
   const bulanSaatIni = new Date().getMonth() + 1
@@ -29,19 +35,28 @@ export default function StatistikBulananPage() {
   const fetchKehadiran = async () => {
     setIsLoadingPage(true)
     const { data, error } = await supabase.rpc('get_kehadiran_bulanan', { bulan })
-
     if (error) {
       console.error('Gagal ambil data:', error.message)
       setKehadiran([])
     } else {
       setKehadiran(data || [])
     }
-
     setIsLoadingPage(false)
+  }
+
+  const fetchStatistikDepartemen = async () => {
+    const { data, error } = await supabase.rpc('get_kehadiran_departemen_bulanan', { bulan })
+    if (error) {
+      console.error('Gagal ambil statistik departemen:', error.message)
+      setStatistikDepartemen([])
+    } else {
+      setStatistikDepartemen(data || [])
+    }
   }
 
   useEffect(() => {
     fetchKehadiran()
+    fetchStatistikDepartemen()
   }, [bulan])
 
   const exportCSV = () => {
@@ -83,13 +98,11 @@ export default function StatistikBulananPage() {
         </button>
       </div>
 
-      {/* Table Card */}
+      {/* Table Kehadiran */}
       <div className="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
-      <h2>
-  Statistik Absensi Doa Pengerja Bulan {dayjs().month(bulan - 1).format('MMMM')}
-</h2>
-
-
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+          Statistik Absensi Doa Pengerja Bulan {dayjs().month(bulan - 1).format('MMMM')}
+        </h2>
 
         {kehadiran.length === 0 ? (
           <p className="text-sm text-red-600">Tidak ada data kehadiran bulan ini.</p>
@@ -97,12 +110,8 @@ export default function StatistikBulananPage() {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-gray-700">
-                  Nama Pelayan
-                </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-700">
-                  Status Kehadiran
-                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-700">Nama Pelayan</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-700">Status Kehadiran</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -127,8 +136,29 @@ export default function StatistikBulananPage() {
         )}
 
         <p className="mt-4 text-sm text-gray-600">
-          Menampilkan {kehadiran.length} pelayan untuk bulan ini.
+          Menampilkan {kehadiran.length} pelayan untuk bulan ini.s
         </p>
+
+        {/* Statistik Per Departemen */}
+        <div className="mt-8">
+          <h3 className="text-md font-semibold text-gray-800 mb-2">
+            Statistik Kehadiran Per Departemen
+          </h3>
+          {statistikDepartemen.length === 0 ? (
+            <p className="text-sm text-gray-500">Belum ada data departemen bulan ini.</p>
+          ) : (
+            <ul className="space-y-2 text-sm text-gray-700">
+              {statistikDepartemen.map((d, i) => {
+                const persentase = Math.round((d.total_hadir / d.total_pelayan) * 100)
+                return (
+                  <li key={i} className="bg-gray-50 px-4 py-2 rounded-md shadow-sm">
+                    <strong>{d.nama_departemen}</strong>: {d.total_hadir} orang hadir dari {d.total_pelayan} orang (kehadiran {persentase}%)
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   )
