@@ -29,8 +29,6 @@ type DepartemenStat = {
   total_pelayan: number
 }
 
-
-
 const namaBulan = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -40,15 +38,15 @@ export default function StatistikAbsensiRange() {
   const bulanSekarang = new Date().getMonth() + 1
   const tahunSekarang = new Date().getFullYear()
 
-  const [rangeStart, setRangeStart] = useState(7)
-  const [rangeEnd, setRangeEnd] = useState(8)
+  // Default diatur ke bulan dan tahun sekarang
+  const [rangeStart, setRangeStart] = useState(bulanSekarang)
+  const [rangeEnd, setRangeEnd] = useState(bulanSekarang)
   const [tahun, setTahun] = useState(tahunSekarang)
 
   const [isLoading, setIsLoading] = useState(true)
   const [kehadiranRaw, setKehadiranRaw] = useState<KehadiranRow[]>([])
   const [formatted, setFormatted] = useState<any[]>([])
   const [dataChart, setDataChart] = useState<DepartemenStat[]>([])
-
   const [statistikDepartemen, setStatistikDepartemen] = useState<DepartemenStat[]>([])
 
   const fetchStatistikDepartemen = async () => {
@@ -64,7 +62,6 @@ export default function StatistikAbsensiRange() {
       setStatistikDepartemen(data || [])
     }
   }
-
 
   const fetchKehadiran = async () => {
     setIsLoading(true)
@@ -147,6 +144,22 @@ export default function StatistikAbsensiRange() {
     writeFile(workbook, namaFile)
   }
 
+  // Fungsi untuk menentukan warna progress bar berdasarkan persentase
+  const getProgressBarColor = (persentase: number) => {
+    if (persentase >= 80) return 'bg-green-500'
+    if (persentase >= 60) return 'bg-yellow-500'
+    if (persentase >= 40) return 'bg-orange-500'
+    return 'bg-red-500'
+  }
+
+  // Fungsi untuk menentukan warna teks persentase
+  const getTextColor = (persentase: number) => {
+    if (persentase >= 80) return 'text-green-700'
+    if (persentase >= 60) return 'text-yellow-700'
+    if (persentase >= 40) return 'text-orange-700'
+    return 'text-red-700'
+  }
+
   if (isLoading) return <LoadingOverlay />
 
   return (
@@ -218,7 +231,7 @@ export default function StatistikAbsensiRange() {
                     </span>
                   </td>
                 ))}
-                                <td className="px-3 py-2 text-center font-bold">{d['Total Kehadiran']}</td>
+                <td className="px-3 py-2 text-center font-bold">{d['Total Kehadiran']}</td>
               </tr>
             ))}
           </tbody>
@@ -227,68 +240,72 @@ export default function StatistikAbsensiRange() {
         <p className="mt-4 text-sm text-gray-600">
           Menampilkan {formatted.length} pelayan dari bulan {namaBulan[rangeStart - 1]} hingga {namaBulan[rangeEnd - 1]} tahun {tahun}.
         </p>
-        <br/>
 
-        {dataChart.length > 0 && (
-          <div className="mt-10">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Statistik Kehadiran Per Departemen
-            </h3>
 
-            {/* Pie Chart */}
-            <div className="max-w-md mx-auto">
-              <Pie
-                data={{
-                  labels: dataChart.map((d) => d.nama_department),
-                  datasets: [{
-                    label: 'Jumlah Hadir',
-                    data: dataChart.map((d) => d.total_hadir),
-                    backgroundColor: [
-                      '#A3BFFA', '#B2DFDB', '#FFCCBC', '#C5E1A5', '#F8BBD0',
-                      '#D1C4E9', '#FFE082', '#BCAAA4', '#90CAF9'
-                    ],
-                    borderWidth: 1,
-                  }],
-                }}
-                options={{
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        boxWidth: 12,
-                        font: { size: 12 }
-                      }
-                    }
-                  }
-                }}
-              />
-              <p className="text-sm text-gray-600 mt-3 text-center">
-                Menampilkan jumlah pelayan hadir berdasarkan departemen untuk rentang yang dipilih.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Statistik Kehadiran Per Departemen (List Format) */}
+        {/* Statistik Kehadiran Per Departemen (Container Format) */}
         <div className="mt-10">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Rekap Kehadiran Per Departemen
-          </h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-6">
+          Rekap Kehadiran Per Departemen ({namaBulan[rangeStart - 1]} - {namaBulan[rangeEnd - 1]} {tahun})
+        </h3>
+          
           {statistikDepartemen.length === 0 ? (
             <p className="text-sm text-gray-500">Belum ada data kehadiran departemen untuk rentang ini.</p>
           ) : (
-            <ul className="space-y-2 text-sm text-gray-700">
-              {statistikDepartemen.map((d, i) => {
-                const persentase = d.total_pelayan > 0
-                  ? Math.round((d.total_hadir / d.total_pelayan) * 100)
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {statistikDepartemen.map((dept, index) => {
+                const persentase = dept.total_pelayan > 0
+                  ? Math.round((dept.total_hadir / dept.total_pelayan) * 100)
                   : 0
+                const tidakHadir = dept.total_pelayan - dept.total_hadir
+
                 return (
-                  <li key={i} className="bg-gray-50 px-4 py-2 rounded-md shadow-sm">
-                    <strong>{d.nama_department}</strong>: {d.total_hadir} orang hadir dari {d.total_pelayan} orang (kehadiran {persentase}%)
-                  </li>
+                  <div key={index} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+                    {/* Header Departemen */}
+                    <div className="mb-3">
+                      <h4 className="font-semibold text-gray-800 text-lg">{dept.nama_department}</h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {dept.total_pelayan} total anggota
+                      </p>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="mb-3">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium text-gray-700">Kehadiran</span>
+                        <span className={`font-bold ${getTextColor(persentase)}`}>
+                          {persentase}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className={`h-2.5 rounded-full ${getProgressBarColor(persentase)}`}
+                          style={{ width: `${persentase}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Statistik Detail */}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="bg-green-50 p-2 rounded-md">
+                        <div className="text-green-700 font-semibold">{dept.total_hadir}</div>
+                        <div className="text-green-600 text-xs">Hadir</div>
+                      </div>
+                      <div className="bg-red-50 p-2 rounded-md">
+                        <div className="text-red-700 font-semibold">{tidakHadir}</div>
+                        <div className="text-red-600 text-xs">Tidak Hadir</div>
+                      </div>
+                    </div>
+
+                    {/* Ringkasan */}
+                    {/* <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-xs text-gray-500">
+                        Rasio kehadiran: {dept.total_hadir}:{dept.total_pelayan}
+                      </p>
+                    </div> */}
+                  </div>
                 )
               })}
-            </ul>
+            </div>
           )}
         </div>
 
