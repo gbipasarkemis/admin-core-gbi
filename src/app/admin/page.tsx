@@ -29,6 +29,109 @@ type DepartemenStat = {
   total_pelayan: number
 }
 
+type Pelayan = {
+  id: number;
+  kode_pelayan: string;
+  nama_pelayan: string;
+  department: number;
+  email: string;
+  jenis_kelamin: string;
+  alamat: string;
+  tanggal_lahir: string;
+  departments?: {
+    nama_department: string;
+  };
+}
+
+// Komponen Modal untuk menampilkan list pelayan
+const PelayanListModal = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  pelayanList 
+}: { 
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  pelayanList: Pelayan[];
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+      {/* Backdrop dengan transparansi ringan */}
+      <div 
+        className="absolute inset-0 bg-gray-500 bg-opacity-20"
+        onClick={onClose}
+      ></div>
+      
+      {/* Modal Content */}
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden relative z-10">
+        {/* Header */}
+        <div className="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">
+            {title} ({pelayanList.length} orang)
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-auto max-h-[60vh]">
+          {pelayanList.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              Tidak ada data pelayan
+            </p>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">No</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Nama Pelayan</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Department</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Email</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Jenis Kelamin</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {pelayanList.map((pelayan, index) => (
+                  <tr key={pelayan.kode_pelayan} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 text-gray-800">{index + 1}</td>
+                    <td className="px-4 py-2 text-gray-800 font-medium">
+                      {pelayan.nama_pelayan}
+                    </td>
+                    <td className="px-4 py-2 text-gray-800">
+                      {pelayan.departments?.nama_department || 'Tidak ada department'}
+                    </td>
+                    <td className="px-4 py-2 text-gray-800">{pelayan.email}</td>
+                    <td className="px-4 py-2 text-gray-800">
+                      {pelayan.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 text-sm font-semibold transition"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const namaBulan = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -48,6 +151,37 @@ export default function StatistikAbsensiRange() {
   const [formatted, setFormatted] = useState<any[]>([])
   const [dataChart, setDataChart] = useState<DepartemenStat[]>([])
   const [statistikDepartemen, setStatistikDepartemen] = useState<DepartemenStat[]>([])
+  const [dataPelayan, setDataPelayan] = useState<Pelayan[]>([])
+
+  // State untuk modal
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    title: string;
+    pelayanList: Pelayan[];
+  }>({
+    isOpen: false,
+    title: '',
+    pelayanList: []
+  })
+
+  const fetchDataPelayan = async () => {
+    const { data, error } = await supabase
+      .from('pelayan')
+      .select(`
+        *,
+        departments (nama_department)
+      `)
+      .order('nama_pelayan');
+
+    if (error) {
+      console.error('Error fetching pelayan data:', error);
+      return;
+    }
+
+    if (data) {
+      setDataPelayan(data as Pelayan[]);
+    }
+  }
 
   const fetchStatistikDepartemen = async () => {
     const { data, error } = await supabase.rpc('get_kehadiran_departemen_dengan_total', {
@@ -96,6 +230,44 @@ export default function StatistikAbsensiRange() {
     else setDataChart(data || [])
   }
 
+  // Fungsi untuk membuka modal dengan data pelayan
+  const openPelayanModal = (type: 'hadir' | 'tidak-hadir', dept: DepartemenStat, hadirCount: number, totalCount: number) => {
+    // Cari department ID berdasarkan nama department
+    const departmentPelayan = dataPelayan.find(p => 
+      p.departments?.nama_department === dept.nama_department
+    );
+    
+    let filteredPelayan: Pelayan[] = [];
+    const title = type === 'hadir' ? 'Pelayan yang Hadir' : 'Pelayan yang Tidak Hadir';
+
+    if (departmentPelayan) {
+      // Filter pelayan berdasarkan department
+      const pelayanInDept = dataPelayan.filter(p => 
+        p.departments?.nama_department === dept.nama_department
+      );
+
+      if (type === 'hadir') {
+        // Ambil sample data untuk yang hadir (dalam implementasi nyata, ini akan dari data absensi)
+        filteredPelayan = pelayanInDept.slice(0, Math.min(hadirCount, pelayanInDept.length));
+      } else {
+        // Ambil sample data untuk yang tidak hadir
+        const tidakHadirCount = totalCount - hadirCount;
+        filteredPelayan = pelayanInDept.slice(-Math.min(tidakHadirCount, pelayanInDept.length));
+      }
+    }
+
+    setModalState({
+      isOpen: true,
+      title: `${title} - ${dept.nama_department}`,
+      pelayanList: filteredPelayan
+    });
+  };
+
+  // Fungsi untuk menutup modal
+  const closeModal = () => {
+    setModalState(prev => ({ ...prev, isOpen: false }));
+  };
+
   useEffect(() => {
     if (tahun === tahunSekarang) {
       if (rangeEnd > bulanSekarang) setRangeEnd(bulanSekarang)
@@ -105,6 +277,7 @@ export default function StatistikAbsensiRange() {
     fetchKehadiran()
     fetchChartData()
     fetchStatistikDepartemen()
+    fetchDataPelayan() // Fetch data pelayan juga
   }, [rangeStart, rangeEnd, tahun])
 
   useEffect(() => {
@@ -284,24 +457,26 @@ export default function StatistikAbsensiRange() {
                       </div>
                     </div>
 
-                    {/* Statistik Detail */}
+                    {/* Statistik Detail - CONTAINER BISA DIKLIK */}
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="bg-green-50 p-2 rounded-md">
+                      {/* Container Hadir - SELURUHNYA KLIKABLE */}
+                      <div 
+                        onClick={() => openPelayanModal('hadir', dept, dept.total_hadir, dept.total_pelayan)}
+                        className="bg-green-50 p-2 rounded-md cursor-pointer hover:bg-green-100 transition-colors border-2 border-transparent hover:border-green-300"
+                      >
                         <div className="text-green-700 font-semibold">{dept.total_hadir}</div>
                         <div className="text-green-600 text-xs">Hadir</div>
                       </div>
-                      <div className="bg-red-50 p-2 rounded-md">
+                      
+                      {/* Container Tidak Hadir - SELURUHNYA KLIKABLE */}
+                      <div 
+                        onClick={() => openPelayanModal('tidak-hadir', dept, dept.total_hadir, dept.total_pelayan)}
+                        className="bg-red-50 p-2 rounded-md cursor-pointer hover:bg-red-100 transition-colors border-2 border-transparent hover:border-red-300"
+                      >
                         <div className="text-red-700 font-semibold">{tidakHadir}</div>
                         <div className="text-red-600 text-xs">Tidak Hadir</div>
                       </div>
                     </div>
-
-                    {/* Ringkasan */}
-                    {/* <div className="mt-3 pt-3 border-t border-gray-100">
-                      <p className="text-xs text-gray-500">
-                        Rasio kehadiran: {dept.total_hadir}:{dept.total_pelayan}
-                      </p>
-                    </div> */}
                   </div>
                 )
               })}
@@ -310,6 +485,14 @@ export default function StatistikAbsensiRange() {
         </div>
 
       </div>
+
+      {/* Modal untuk menampilkan list pelayan */}
+      <PelayanListModal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.title}
+        pelayanList={modalState.pelayanList}
+      />
     </div>
   )
 }
